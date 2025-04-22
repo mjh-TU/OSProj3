@@ -1,0 +1,7 @@
+/build/client
+/build/server
+/build/cmake_install.cmake
+/build/CMakeCache.txt
+/build/Makefile
+/build/Makefile.cmake
+/build/CMakeFiles/
