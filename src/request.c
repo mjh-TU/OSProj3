@@ -7,6 +7,9 @@
 //
 //	TODO: add code to create and manage the buffer
 //
+void manage_buffer() {
+   
+}
 
 //
 // Sends out HTTP response in case of errors
@@ -135,6 +138,17 @@ void request_serve_static(int fd, char *filename, int filesize) {
 void* thread_request_serve_static(void* arg)
 {
 	// TODO: write code to actualy respond to HTTP requests
+
+
+  // Fetch request from buffer
+
+  // Get thread from thread pool
+
+  // Send to client
+
+  // Free thread and add back to thread pool
+
+
 }
 
 //
@@ -169,13 +183,27 @@ void request_handle(int fd) {
     
 	// verify if requested content is static
     if (is_static) {
-		if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) {
-			request_error(fd, filename, "403", "Forbidden", "server could not read this file");
-			return;
-		}
+      if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) {
+        request_error(fd, filename, "403", "Forbidden", "server could not read this file");
+        return;
+      }
 		
-		// TODO: write code to add HTTP requests in the buffer based on the scheduling policy
+      /**
+      *
+      * TODO: write code to add HTTP requests in the buffer based on the scheduling policy
+      * 
+      * Based off arguments given in the server.c handle requests based off the following scheduling policies
+      * 
+      **/
+      switch (scheduling_algo) {
+        case (0):
+          // First-in-first-out (FIFO): service the HTTP requests in the order they arrive.
 
+        case (1):
+          // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
+
+        case (2):
+          // Random: service the HTTP requests by random order.
     } else {
 		request_error(fd, filename, "501", "Not Implemented", "server does not serve dynamic content request");
     }

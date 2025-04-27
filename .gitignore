@@ -5,3 +5,4 @@
 /build/Makefile
 /build/Makefile.cmake
 /build/CMakeFiles/
+.vscode/
