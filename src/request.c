@@ -4,11 +4,26 @@
 #define MAXBUF (8192)
 
 
-//
-//	TODO: add code to create and manage the buffer
-//
-void manage_buffer() {
-   
+/**
+ * 
+ * Manage the buffer of HTTP requests
+ * 
+ */
+
+// Create buffer
+void *create_buffer(int size) {
+  char *buffer = malloc(size);
+  return buffer;
+}
+
+// Add to buffer
+void add_buffer(char *buffer, char *data) {
+
+}
+
+// Remove from buffer
+void remove_buffer() {
+
 }
 
 //
