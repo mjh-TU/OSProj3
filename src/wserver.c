@@ -8,7 +8,6 @@
 #include <pthread.h>
 
 char default_root[] = ".";
-
 //
 // ./wserver [-d basedir] [-p port] [-t threads] [-b buffersize] [-s schedalg (0 - FIFO, 1 - SFF, 2 - Random)]
 // 

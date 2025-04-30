@@ -1,30 +1,14 @@
 #include "io_helper.h"
 #include "request.h"
-
+#include "buffer.h"
 #define MAXBUF (8192)
 
-
-/**
- * 
- * Manage the buffer of HTTP requests
- * 
- */
-
-// Create buffer
-void *create_buffer(int size) {
-  char *buffer = malloc(size);
-  return buffer;
-}
-
-// Add to buffer
-void add_buffer(char *buffer, char *data) {
-
-}
-
-// Remove from buffer
-void remove_buffer() {
-
-}
+// Create buffer array and make global
+bufferRequest reqarr[MAXBUF] = {0, NULL, 0};
+pthread_mutex_t buffer_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t buffer_not_empty = PTHREAD_COND_INITIALIZER;
+pthread_cond_t buffer_not_full = PTHREAD_COND_INITIALIZER;
+int buf_size = 0;
 
 //
 // Sends out HTTP response in case of errors
@@ -147,23 +131,52 @@ void request_serve_static(int fd, char *filename, int filesize) {
     munmap_or_die(srcp, filesize);
 }
 
-//
-// Fetches the requests from the buffer and handles them (thread logic)
-//
-void* thread_request_serve_static(void* arg)
+
+/**
+ * Fetches the requests from the buffer and handles them (thread logic)
+ * 
+ * This is where all the child threads will go
+ * Make this a while loop to enure threads stay here and not escape
+ */
+
+void* thread_request_serve_static(void *arg)
 {
-	// TODO: write code to actualy respond to HTTP requests
+  while (1) {
 
+    // Lock buffer
+    pthread_mutex_lock(&buffer_lock);
 
-  // Fetch request from buffer
+    // Wait until there is a request
+    while (buf_size == 0) {
+      pthread_cond_wait(&buffer_not_empty, &buffer_lock);
+    }
 
-  // Get thread from thread pool
+    bufferRequest request = {0, NULL, 0};
 
-  // Send to client
+    // Fetch request from buffer and remove from buffer
+    switch (scheduling_algo) {
+      case (0):
+        // First-in-first-out (FIFO): service the HTTP requests in the order they arrive.
+        request = reqarr[0];
+        // Shift requests in array to the left
+        for (int index = 0; index < buf_size-1; index++) {
+          reqarr[index] = reqarr[index+1];
+        }
+        buf_size--;
+      case (1):
+        // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
+      case (2):
+        // Random: service the HTTP requests by random order.
+    }
 
-  // Free thread and add back to thread pool
+    pthread_cond_signal(&buffer_not_full);
+    pthread_mutex_unlock(&buffer_lock);
 
+    // Send to client
+    request_serve_static(request.fd, request.filename, request.pint_buf_size);
 
+    close_or_die(req.fd);
+  }
 }
 
 //
@@ -210,16 +223,67 @@ void request_handle(int fd) {
       * Based off arguments given in the server.c handle requests based off the following scheduling policies
       * 
       **/
-      switch (scheduling_algo) {
-        case (0):
-          // First-in-first-out (FIFO): service the HTTP requests in the order they arrive.
 
-        case (1):
-          // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
+      // Check for directory traversal
+      // If not in current directory abort
 
-        case (2):
-          // Random: service the HTTP requests by random order.
+      // Think about producer/consumer problem. Hint: Look how we solved this
+      // Save request to struct before adding to buffer
+      bufferRequest req = {fd, filename, sbuf.st_size};
+
+      // Add to buffer to the next available index
+      // 0 is false, 1 is true
+      // Lock buffer
+      pthread_mutex_lock(&buffer_lock);
+
+      // If there is space in the buffer
+      while (buf_size == buffer_max_size) {
+        pthread_cond_wait(&buffer_not_full, &buffer_lock);
+      }
+
+      // Add request to buffer
+      int added = 0;
+      for (int i = 0; i < MAXBUF; i++) {
+        if (reqarr[i].filename == NULL) {
+          reqarr[i] = req;
+          buf_size++;
+          added = 1;
+          break;
+        }
+        else {
+          continue;
+        }
+      }
+
+      // If not able to add to buffer then call error
+      if (added == 0) {
+        request_error(fd, filename, "501", "Not Implemented", "Unable to add request to buffer");
+      }
+
+      // Signal our consumer/child threads
+      pthread_cond_signal(&buffer_not_empty);
+      // Unlock buffer
+      pthread_mutex_unlock(&buffer_lock);
+
+
+
+      // thread_request_server_static();
+
+      // switch (scheduling_algo) {
+      //   case (0):
+      //     // First-in-first-out (FIFO): service the HTTP requests in the order they arrive.
+
+      //     // Handle the first request in the buffer at index 0
+      //     thread_request_serve_static();
+
+      //   case (1):
+      //     // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
+
+      //   case (2):
+      //     // Random: service the HTTP requests by random order.
+      // }
+
     } else {
-		request_error(fd, filename, "501", "Not Implemented", "server does not serve dynamic content request");
+		  request_error(fd, filename, "501", "Not Implemented", "server does not serve dynamic content request");
     }
 }
