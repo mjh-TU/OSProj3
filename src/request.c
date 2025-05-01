@@ -1,6 +1,9 @@
 #include "io_helper.h"
 #include "request.h"
 #include "buffer.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #define MAXBUF (8192)
 
 int num_threads = DEFAULT_THREADS;
@@ -171,6 +174,29 @@ void* thread_request_serve_static(void *arg)
         // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
       case (2):
         // Random: service the HTTP requests by random order.
+
+        int find = 0; // 0 is false, 1 is true.
+        int index_to_remove;
+        unsigned int seed = time(0); 
+        while (find == 0) {
+          // Generate random index in buffer
+          int rd_num = rand_r(&seed) % (buf_size - 0 + 1) + 0;
+          // If our random index found a request at that index then stop
+          if (reqarr[rd_num].filename != NULL) {
+            find = 1;
+            index_to_remove = rd_num;
+            request = reqarr[index_to_remove];
+          }
+        }
+
+
+        // Remove and shift requests in array to the left
+        // Overwrite the request to remove
+        for (int index = index_to_remove; index < buf_size-1; index++) {
+          reqarr[index] = reqarr[index+1];
+        }
+        buf_size--;
+
     }
 
     pthread_cond_signal(&buffer_not_full);
