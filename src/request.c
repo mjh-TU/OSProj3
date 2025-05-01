@@ -175,7 +175,7 @@ void* thread_request_serve_static(void *arg)
     // Send to client
     request_serve_static(request.fd, request.filename, request.pint_buf_size);
 
-    close_or_die(req.fd);
+    close_or_die(request.fd);
   }
 }
 
@@ -227,6 +227,9 @@ void request_handle(int fd) {
       // Check for directory traversal
       // If not in current directory abort
 
+      // Test
+      // printf(scheduling_algo);
+
       // Think about producer/consumer problem. Hint: Look how we solved this
       // Save request to struct before adding to buffer
       bufferRequest req = {fd, filename, sbuf.st_size};
@@ -264,24 +267,6 @@ void request_handle(int fd) {
       pthread_cond_signal(&buffer_not_empty);
       // Unlock buffer
       pthread_mutex_unlock(&buffer_lock);
-
-
-
-      // thread_request_server_static();
-
-      // switch (scheduling_algo) {
-      //   case (0):
-      //     // First-in-first-out (FIFO): service the HTTP requests in the order they arrive.
-
-      //     // Handle the first request in the buffer at index 0
-      //     thread_request_serve_static();
-
-      //   case (1):
-      //     // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
-
-      //   case (2):
-      //     // Random: service the HTTP requests by random order.
-      // }
 
     } else {
 		  request_error(fd, filename, "501", "Not Implemented", "server does not serve dynamic content request");
