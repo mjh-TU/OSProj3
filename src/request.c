@@ -3,6 +3,10 @@
 #include "buffer.h"
 #define MAXBUF (8192)
 
+int num_threads = DEFAULT_THREADS;
+int buffer_max_size = DEFAULT_BUFFER_SIZE;
+int scheduling_algo = DEFAULT_SCHED_ALGO;
+
 // Create buffer array and make global
 bufferRequest reqarr[MAXBUF] = {0, NULL, 0};
 pthread_mutex_t buffer_lock = PTHREAD_MUTEX_INITIALIZER;
