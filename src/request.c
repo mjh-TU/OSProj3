@@ -146,8 +146,7 @@ void request_serve_static(int fd, char *filename, int filesize) {
  * Make this a while loop to enure threads stay here and not escape
  */
 
-void* thread_request_serve_static(void *arg)
-{
+void* thread_request_serve_static(void *arg) {
   while (1) {
 
     // Lock buffer
@@ -172,6 +171,16 @@ void* thread_request_serve_static(void *arg)
         buf_size--;
       case (1):
         // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
+
+        // Iterate through buffer
+
+        // Check each request and grab that files size
+
+        // Grab the request with the smallest one
+
+        // Shift requests in array to the left
+
+
       case (2):
         // Random: service the HTTP requests by random order.
 
@@ -206,6 +215,8 @@ void* thread_request_serve_static(void *arg)
     request_serve_static(request.fd, request.filename, request.pint_buf_size);
 
     close_or_die(request.fd);
+
+
   }
 }
 
@@ -257,22 +268,18 @@ void request_handle(int fd) {
       // Check for directory traversal
       // If not in current directory abort
 
-      // Test
-      // printf(scheduling_algo);
-
       // Think about producer/consumer problem. Hint: Look how we solved this
       // Save request to struct before adding to buffer
       bufferRequest req = {fd, filename, sbuf.st_size};
 
       // Add to buffer to the next available index
-      // 0 is false, 1 is true
       // Lock buffer
       pthread_mutex_lock(&buffer_lock);
 
       // If there is space in the buffer
-      while (buf_size == buffer_max_size) {
-        pthread_cond_wait(&buffer_not_full, &buffer_lock);
-      }
+      // while (buf_size == buffer_max_size) {
+      //   pthread_cond_wait(&buffer_not_full, &buffer_lock);
+      // }
 
       // Add request to buffer
       int added = 0;
