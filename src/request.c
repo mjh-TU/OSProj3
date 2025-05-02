@@ -169,6 +169,7 @@ void* thread_request_serve_static(void *arg) {
           reqarr[index] = reqarr[index+1];
         }
         buf_size--;
+        break;
       case (1):
         // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
 
@@ -179,6 +180,8 @@ void* thread_request_serve_static(void *arg) {
         // Grab the request with the smallest one
 
         // Shift requests in array to the left
+
+        break;
 
 
       case (2):
@@ -205,6 +208,8 @@ void* thread_request_serve_static(void *arg) {
           reqarr[index] = reqarr[index+1];
         }
         buf_size--;
+
+        break;
 
     }
 
@@ -282,7 +287,7 @@ void request_handle(int fd) {
       // }
 
       // Add request to buffer
-      reqarr[buf_size+1] = req;
+      reqarr[buf_size] = req;
       buf_size++;
 
       // Signal our consumer/child threads
