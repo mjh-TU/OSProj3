@@ -282,23 +282,8 @@ void request_handle(int fd) {
       // }
 
       // Add request to buffer
-      int added = 0;
-      for (int i = 0; i < MAXBUF; i++) {
-        if (reqarr[i].filename == NULL) {
-          reqarr[i] = req;
-          buf_size++;
-          added = 1;
-          break;
-        }
-        else {
-          continue;
-        }
-      }
-
-      // If not able to add to buffer then call error
-      if (added == 0) {
-        request_error(fd, filename, "501", "Not Implemented", "Unable to add request to buffer");
-      }
+      reqarr[buf_size+1] = req;
+      buf_size++;
 
       // Signal our consumer/child threads
       pthread_cond_signal(&buffer_not_empty);
