@@ -279,20 +279,16 @@ void request_handle(int fd) {
       **/
 
       // Check for directory traversal
-      // If not in current directory abort
+      if (strstr(uri, "../")) {
+        request_error(fd, filename, "404", "File not found", "no hacking the server today :) \nPath");
+        return;
+      }
 
-      // Think about producer/consumer problem. Hint: Look how we solved this
       // Save request to struct before adding to buffer
       bufferRequest req = {fd, filename, sbuf.st_size};
 
-      // Add to buffer to the next available index
       // Lock buffer
       pthread_mutex_lock(&buffer_lock);
-
-      // If there is space in the buffer
-      // while (buf_size == buffer_max_size) {
-      //   pthread_cond_wait(&buffer_not_full, &buffer_lock);
-      // }
 
       // Add request to buffer
       reqarr[buf_size] = req;
