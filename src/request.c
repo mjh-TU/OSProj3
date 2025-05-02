@@ -174,12 +174,20 @@ void* thread_request_serve_static(void *arg) {
         // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
 
         // Iterate through buffer
+        int indexOfsmallestFile = 0;
+        for (int index = 0; index < buf_size-1; index++) {
+          int filesize = reqarr[index].pint_buf_size;
+          if (reqarr[index+1].pint_buf_size < filesize) {
+            indexOfsmallestFile = index+1;
+          }
+        }
 
-        // Check each request and grab that files size
-
-        // Grab the request with the smallest one
-
+        request = reqarr[indexOfsmallestFile];
         // Shift requests in array to the left
+        for (int index = indexOfsmallestFile; index < buf_size-1; index++) {
+          reqarr[index] = reqarr[index+1];
+        }
+        buf_size--;
 
         break;
 
