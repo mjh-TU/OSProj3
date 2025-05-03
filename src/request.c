@@ -161,6 +161,10 @@ void request_serve_static(int fd, char *filename, int filesize)
 
 void *thread_request_serve_static(void *arg)
 {
+  // For SFF
+  int starvationSwitch = 0; // 0 is false, 1 is true
+  int switched = 0; // 0 is false, 1 is true
+  int starvationCounter = 0;
   while (1)
   {
 
@@ -191,27 +195,58 @@ void *thread_request_serve_static(void *arg)
     case (1):
       // Smallest-file-first (SFF): service the HTTP requests by order of the requested file size. Starvation must be accounted for.
 
-      int indexOfsmallestFile = 0;
-      int sizeOfsmallestFile = 0;
+      if (starvationCounter > 100) {
+        starvationSwitch = 1;
+        // Reset counter
+        // starvationCounter = 0;
+      }
 
-      // Iterate through buffer
-      for (int index = 0; index < buf_size - 1; index++)
+      // If switch is false continue with SFF
+      if (starvationSwitch = 0)
       {
-        int filesize = reqarr[index].pint_buf_size;
-        if (filesize < sizeOfsmallestFile)
+        int indexOfsmallestFile = 0;
+        int sizeOfsmallestFile = 0;
+
+        // Iterate through buffer
+        for (int index = 0; index < buf_size - 1; index++)
         {
-          sizeOfsmallestFile = filesize;
-          indexOfsmallestFile = index;
+          int filesize = reqarr[index].pint_buf_size;
+          if (filesize < sizeOfsmallestFile)
+          {
+            sizeOfsmallestFile = filesize;
+            indexOfsmallestFile = index;
+          }
         }
-      }
 
-      request = reqarr[indexOfsmallestFile];
-      // Shift requests in array to the left
-      for (int index = indexOfsmallestFile; index < buf_size - 1; index++)
-      {
-        reqarr[index] = reqarr[index + 1];
+        request = reqarr[indexOfsmallestFile];
+        // Shift requests in array to the left
+        for (int index = indexOfsmallestFile; index < buf_size - 1; index++)
+        {
+          reqarr[index] = reqarr[index + 1];
+        }
+        buf_size--;
+        starvationCounter++;
       }
-      buf_size--;
+      // Else switch was true so switch to FIFO mode to account for starvation
+      else
+      {
+        // When our FIFO has ran for 100 requests switch back to SFF
+        if (switched > 100)
+        {
+          starvationSwitch = 0;
+          switched = 0;
+          starvationCounter = 0;
+        }
+
+        // First-in-first-out (FIFO): service the HTTP requests in the order they arrive.
+        request = reqarr[0];
+        // Shift requests in array to the left
+        for (int index = 0; index < buf_size - 1; index++)
+        {
+          reqarr[index] = reqarr[index + 1];
+        }
+        buf_size--;
+      }
 
       break;
 
